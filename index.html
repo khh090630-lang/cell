@@ -23,8 +23,8 @@
         button:active { transform: scale(0.98); }
         #btn-add-drug { background-color: #007bff; }
         #btn-add-drug:hover { background-color: #0056b3; }
-        #btn-light { background-color: #ff9800; }
-        #btn-light:hover { background-color: #e68a00; }
+        #btn-light { background-color: #e63946; } /* 레이저 느낌으로 색상 변경 */
+        #btn-light:hover { background-color: #c1121f; }
         #btn-accel { background-color: #6f42c1; }
         #btn-accel:hover { background-color: #5a32a3; }
         #btn-reset { background-color: #6c757d; }
@@ -45,8 +45,8 @@
         </div>
         
         <div id="explanation-box">
-            <h3 id="exp-title">🔬 시뮬레이션 준비 완료</h3>
-            <p id="explanation-text">우측 패널에서 변수를 설정하고 치료제를 투여해 보세요. <br><br><b>[객체 설명]</b> 🟢 정상 신경 세포 | 🔴 표적 암세포 | 🟣 돌연변이 암세포 <br> 🔘 <b>대식세포(Macrophage):</b> 암세포 주변을 맴돌며 <b>치료제를 방어(흡수)</b>하는 미세환경 방해물</p>
+            <h3 id="exp-title">⚔️ 종양과의 대결 준비 완료</h3>
+            <p id="explanation-text">암세포가 뇌 속에서 서서히 증식하고 있습니다! 우측 패널에서 변수를 설정하고 <b>[약물 투여]</b>와 <b>[레이저 조사]</b>를 통해 종양을 소탕해 보세요. <br><br><b>[객체 설명]</b> 🟢 정상 신경 세포 | 🔴 표적 암세포 | 🟣 돌연변이 암세포 <br> 🔘 <b>대식세포(회색):</b> 약물을 대신 흡수해버리는 방해물</p>
         </div>
     </div>
 
@@ -54,18 +54,18 @@
         <h2>제어 패널 (독립 변인)</h2>
         
         <div class="control-group">
-            <label>1. 혈액-뇌 장벽(BBB) 투과율: <span id="val-bbb">30</span>% <span class="info-icon" title="집속초음파 시술을 통한 장벽 개방 정도">ⓘ</span></label>
-            <input type="range" id="slider-bbb" min="0" max="100" value="30">
+            <label>1. 혈액-뇌 장벽(BBB) 투과율: <span id="val-bbb">50</span>% <span class="info-icon" title="집속초음파 시술을 통한 장벽 개방 정도">ⓘ</span></label>
+            <input type="range" id="slider-bbb" min="0" max="100" value="50">
         </div>
 
         <div class="control-group">
-            <label>2. 종양 미세환경 (대식세포 밀도): <span id="val-mac">10</span> <span class="info-icon" title="치료제를 막아내는 대식세포의 수">ⓘ</span></label>
-            <input type="range" id="slider-mac" min="0" max="30" value="10">
+            <label>2. 대식세포 (방해물) 밀도: <span id="val-mac">5</span> <span class="info-icon" title="치료제를 막아내는 대식세포의 수">ⓘ</span></label>
+            <input type="range" id="slider-mac" min="0" max="30" value="5">
         </div>
 
         <div class="control-group">
-            <label>3. 세포 내재화 효율 (NID): <span id="val-nid">50</span>% <span class="info-icon" title="약물이 암세포 내부로 흡수되는 비율">ⓘ</span></label>
-            <input type="range" id="slider-nid" min="0" max="100" value="50">
+            <label>3. 세포 내재화 효율 (NID): <span id="val-nid">70</span>% <span class="info-icon" title="약물이 암세포 내부로 흡수되는 비율">ⓘ</span></label>
+            <input type="range" id="slider-nid" min="0" max="100" value="70">
         </div>
 
         <div class="control-group">
@@ -74,13 +74,13 @@
         </div>
 
         <div class="control-group">
-            <label>5. 돌연변이 발생률 (과변이): <span id="val-mut">1.0</span>% <span class="info-icon" title="진화를 가속화하는 무작위 돌연변이 확률">ⓘ</span></label>
+            <label>5. 돌연변이 발생 확률: <span id="val-mut">1.0</span>% <span class="info-icon" title="진화를 가속화하는 무작위 돌연변이 확률">ⓘ</span></label>
             <input type="range" id="slider-mut" min="0" max="50" value="10">
         </div>
 
         <button id="btn-add-drug">1단계: 나노치료제 투여 (Photo-ADC)</button>
-        <button id="btn-light">2단계: 근적외선(NIR) 조사</button>
-        <button id="btn-accel">시간 가속 (종양의 자연선택 관찰)</button>
+        <button id="btn-light">2단계: 근적외선(NIR) 레이저 발사!</button>
+        <button id="btn-accel">3단계: 시간 가속 (종양의 자연선택 관찰)</button>
         <button id="btn-reset">시뮬레이션 초기화</button>
 
         <div class="stats">
@@ -88,7 +88,7 @@
             <span class="color-box" style="background: #28a745;"></span> 정상 신경 세포: <span id="count-normal">0</span><br>
             <span class="color-box" style="background: #dc3545;"></span> 표적 발현 암세포: <span id="count-target">0</span><br>
             <span class="color-box" style="background: #6f42c1;"></span> 돌연변이 암세포: <span id="count-mutant">0</span><br>
-            <span class="color-box" style="background: #868e96;"></span> 대식세포 (장벽): <span id="count-mac">0</span><br>
+            <span class="color-box" style="background: #868e96;"></span> 대식세포 (방해물): <span id="count-mac">0</span><br>
             <span class="color-box" style="background: #ffc107;"></span> 활성 치료제: <span id="count-drug">0</span>
         </div>
     </div>
@@ -101,13 +101,13 @@
         
         let cells = [];
         let drugs = [];
-        let particles = []; // ROS 폭발 이펙트 파티클
+        let particles = []; 
         let timeSpeed = 1;
         
-        // 사용자 변수
-        let bbbRate = 0.3;
-        let macDensity = 10;
-        let nidRate = 0.5;
+        // 사용자 변수 초기값 세팅 (게임성에 맞게 조정)
+        let bbbRate = 0.5;
+        let macDensity = 5;
+        let nidRate = 0.7;
         let lightIntensity = 0.8;
         let mutationRate = 0.01;
 
@@ -121,7 +121,7 @@
         document.getElementById('btn-add-drug').onclick = () => {
             for(let i=0; i<45; i++) drugs.push(new Drug());
             expTitle.innerText = "💉 [1단계] 약물 투여 및 종양 미세환경 진입";
-            expText.innerHTML = `투여된 치료제가 <b>혈액-뇌 장벽(BBB)</b>을 통과합니다.<br>장벽을 통과하더라도 <b>대식세포(회색)</b>가 약물을 중간에 흡수해버립니다! 종양 미세환경(TME)이 약물을 방어하는 과정을 관찰하세요. 약물이 암세포 표면에 무사히 닿으면 <b>내재화 효율(${Math.round(nidRate*100)}%)</b>에 따라 내부로 흡수됩니다.`;
+            expText.innerHTML = `투여된 치료제가 <b>혈액-뇌 장벽(BBB)</b>을 통과하여 폭격합니다.<br>장벽을 통과하더라도 <b>대식세포(회색)</b>가 약물을 막아냅니다. 암세포 표면에 닿은 약물은 <b>내재화 효율(${Math.round(nidRate*100)}%)</b>에 따라 내부로 침투합니다. 모든 빨간 세포에 약이 들어갈 때까지 여러 번 투여해보세요!`;
         };
 
         const lightOverlay = document.getElementById('lightOverlay');
@@ -129,33 +129,39 @@
             lightOverlay.classList.add('light-on');
             triggerApoptosis();
             
-            expTitle.innerText = "🔦 [2단계] 활성 산소(ROS) 폭발 및 세포 자살";
-            expText.innerHTML = `빛(NIR)이 조사되었습니다! 약물을 품은 암세포 내부에서 파란색 <b>활성 산소(ROS)</b>가 폭발합니다.<br>빛의 세기(${Math.round(lightIntensity*100)}%)에 비례해 암세포의 DNA가 치명적인 손상을 입어 <b>세포 주기가 정지되고 사멸</b>합니다.`;
+            expTitle.innerText = "💥 [2단계] 활성 산소(ROS) 폭발 및 세포 자살";
+            expText.innerHTML = `레이저가 발사되었습니다! 약물을 품은 암세포 내부에서 파란색 <b>활성 산소(ROS)</b>가 터집니다.<br>빛의 세기(${Math.round(lightIntensity*100)}%)에 비례해 암세포의 DNA가 치명적인 손상을 입어 <b>사멸(Apoptosis)</b>합니다.`;
 
             setTimeout(() => { lightOverlay.classList.remove('light-on'); }, 600);
         };
 
         document.getElementById('btn-accel').onclick = () => {
-            timeSpeed = 5;
-            expTitle.innerText = "🧬 시간 가속: 환경 압력과 자연선택";
-            expText.innerHTML = `세포 분열 속도가 5배 증가합니다. 약물에 죽는 표적 암세포(빨간색)와 달리, 무작위 돌연변이로 표적을 상실한 <b>표적 미발현 암세포(보라색)</b>는 약물을 무시하고 생존합니다.<br>경쟁자가 사라진 환경에서 보라색 암세포들이 공간을 지배하며 <b>자연선택적으로 진화(재발)</b>합니다.`;
-            setTimeout(() => { timeSpeed = 1; }, 5000);
+            timeSpeed = 6;
+            expTitle.innerText = "🧬 시간 가속: 환경 압력과 자연선택 (게임 오버)";
+            expText.innerHTML = `세포 분열 속도가 급격히 빨라집니다. 약물에 죽는 표적 암세포(빨간색)는 사라졌지만, 무작위 돌연변이로 표적을 상실한 <b>표적 미발현 암세포(보라색)</b>는 무적 상태로 살아남습니다.<br>경쟁자가 사라진 환경에서 보라색 암세포들이 공간을 지배하며 <b>자연선택적으로 진화(재발)</b>합니다. 인류의 한계입니다.`;
+            setTimeout(() => { timeSpeed = 1; }, 6000);
         };
 
-        document.getElementById('btn-reset').onclick = initSim;
+        document.getElementById('btn-reset').onclick = () => {
+            initSim();
+            expTitle.innerText = "⚔️ 종양과의 대결 준비 완료";
+            expText.innerHTML = "암세포가 다시 초기화되었습니다. 우측 패널에서 변수를 설정하고 <b>[약물 투여]</b>와 <b>[레이저 조사]</b>를 통해 종양을 소탕해 보세요.";
+        };
 
-        // 세포 및 대식세포 클래스
         class Cell {
             constructor(type, x, y) {
-                this.type = type; // 'normal', 'target', 'mutant', 'macrophage'
+                this.type = type; 
                 this.x = x || Math.random() * (canvas.width - 40) + 20;
                 this.y = y || (Math.random() * (canvas.height - 100) + 80);
                 this.radius = type === 'macrophage' ? 12 : (type === 'normal' ? 8 : 10);
                 this.vx = (Math.random() - 0.5) * (type === 'macrophage' ? 1.5 : 1);
                 this.vy = (Math.random() - 0.5) * (type === 'macrophage' ? 1.5 : 1);
                 this.internalizedDrugs = 0;
-                this.divisionBase = type === 'normal' ? Infinity : (type === 'macrophage' ? Infinity : 250);
-                this.divisionTimer = Math.random() * this.divisionBase + 100;
+                
+                // [대결 모드 핵심 변경점] 암세포 분열 시간을 매우 길게 설정하여 대결할 시간을 줍니다.
+                // 기존 250 -> 800으로 늘려 천천히 분열하게 만듦.
+                this.divisionBase = type === 'normal' ? Infinity : (type === 'macrophage' ? Infinity : 800);
+                this.divisionTimer = Math.random() * this.divisionBase + 400; // 최소 400프레임 보장
             }
 
             draw() {
@@ -165,7 +171,7 @@
                 else if (this.type === 'target') ctx.fillStyle = '#dc3545';
                 else if (this.type === 'mutant') ctx.fillStyle = '#6f42c1';
                 else if (this.type === 'macrophage') {
-                    ctx.fillStyle = '#868e96'; // 대식세포는 회색
+                    ctx.fillStyle = '#868e96'; 
                     ctx.strokeStyle = '#343a40';
                     ctx.lineWidth = 2;
                     ctx.stroke();
@@ -192,7 +198,8 @@
                     this.divisionTimer -= timeSpeed;
                     if (this.divisionTimer <= 0 && cells.length < 350) {
                         this.divide();
-                        this.divisionTimer = Math.random() * this.divisionBase + 100;
+                        // 분열 후 다시 긴 타이머 설정
+                        this.divisionTimer = Math.random() * this.divisionBase + 400;
                     }
                 }
             }
@@ -204,7 +211,6 @@
             }
         }
 
-        // 약물 클래스
         class Drug {
             constructor() {
                 this.x = Math.random() * canvas.width;
@@ -243,12 +249,10 @@
                     let distance = Math.sqrt(dx * dx + dy * dy);
 
                     if (distance < cell.radius + this.radius) {
-                        // 대식세포에 닿으면 흡수됨 (약물 소실)
                         if (cell.type === 'macrophage') {
                             this.active = false;
                             break;
                         }
-                        // 표적 암세포에 닿으면 내재화 검사
                         if (cell.type === 'target') {
                             if (Math.random() < nidRate) {
                                 cell.internalizedDrugs++;
@@ -263,7 +267,6 @@
             }
         }
 
-        // 활성 산소(ROS) 폭발 이펙트 파티클
         class Particle {
             constructor(x, y) {
                 this.x = x; this.y = y;
@@ -276,7 +279,7 @@
                 if (!this.active) return;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(0, 191, 255, ${this.alpha})`; // ROS 파란색
+                ctx.fillStyle = `rgba(0, 191, 255, ${this.alpha})`; 
                 ctx.fill();
                 ctx.closePath();
             }
@@ -291,7 +294,6 @@
             cells = cells.filter(cell => {
                 if (cell.type === 'target' && cell.internalizedDrugs > 0) {
                     if (Math.random() < lightIntensity) {
-                        // 사멸할 때 ROS 폭발 이펙트 생성
                         for(let i=0; i<3; i++) particles.push(new Particle(cell.x, cell.y));
                         return false; 
                     }
@@ -318,7 +320,6 @@
             for(let i=0; i<40; i++) cells.push(new Cell('normal'));
             for(let i=0; i<15; i++) cells.push(new Cell('target'));
             
-            // 대식세포 슬라이더 값만큼 추가
             macDensity = parseInt(document.getElementById('slider-mac').value);
             for(let i=0; i<macDensity; i++) cells.push(new Cell('macrophage'));
         }
@@ -342,16 +343,13 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawEnvironment();
 
-            // 객체 업데이트 및 그리기
             cells.forEach(cell => { cell.update(); cell.draw(); });
             drugs.forEach(drug => { drug.update(); drug.draw(); });
             particles.forEach(p => { p.update(); p.draw(); });
 
-            // 쓰레기 수집
             drugs = drugs.filter(d => d.active);
             particles = particles.filter(p => p.active);
 
-            // 대식세포 개수 동기화 (사용자가 중간에 슬라이더를 바꿀 경우를 위해)
             let currentMacs = cells.filter(c => c.type === 'macrophage').length;
             if (currentMacs < macDensity) cells.push(new Cell('macrophage'));
             else if (currentMacs > macDensity) {
