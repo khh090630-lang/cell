@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>광반응 나노치료제 종양 진화 시뮬레이션</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; display: flex; gap: 20px; }
+        #canvas-container { position: relative; }
+        canvas { background-color: #ffffff; border: 2px solid #333; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        #controls { background: white; padding: 20px; border-radius: 8px; border: 2px solid #ccc; width: 300px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; font-size: 1.2rem; color: #333; }
+        .control-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        input[type="range"] { width: 100%; }
+        button { width: 100%; padding: 10px; margin-bottom: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        #btn-light { background-color: #ff9800; }
+        #btn-light:hover { background-color: #e68a00; }
+        .stats { margin-top: 20px; font-size: 0.95rem; line-height: 1.6; }
+        .color-box { display: inline-block; width: 12px; height: 12px; margin-right: 5px; border-radius: 50%; }
+        .overlay { position: absolute; top: 0; left: 0; width: 600px; height: 600px; pointer-events: none; border-radius: 8px; transition: background-color 0.3s; }
+        .light-on { background-color: rgba(255, 0, 0, 0.15); }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <canvas id="simCanvas" width="600" height="600"></canvas>
+        <div id="lightOverlay" class="overlay"></div>
+    </div>
+
+    <div id="controls">
+        <h2>제어 패널 (독립 변인)</h2>
+        
+        <div class="control-group">
+            <label>내재화 효율 (NID): <span id="val-nid">50</span>%</label>
+            <input type="range" id="slider-nid" min="0" max="100" value="50">
+        </div>
+
+        <div class="control-group">
+            <label>돌연변이 발생률: <span id="val-mut">10</span>%</label>
+            <input type="range" id="slider-mut" min="0" max="100" value="10">
+        </div>
+
+        <button id="btn-add-drug">치료제 투여 (Photo-ADC)</button>
+        <button id="btn-light">근적외선(NIR) 조사 (Light ON)</button>
+        <button id="btn-reset" style="background-color: #6c757d;">초기화</button>
+
+        <div class="stats">
+            <strong>세포 개체군 현황</strong><br>
+            <span class="color-box" style="background: #28a745;"></span> 정상 신경 세포: <span id="count-normal">0</span><br>
+            <span class="color-box" style="background: #dc3545;"></span> 표적 발현 암세포: <span id="count-target">0</span><br>
+            <span class="color-box" style="background: #6f42c1;"></span> 표적 미발현(돌연변이): <span id="count-mutant">0</span><br>
+            <span class="color-box" style="background: #ffc107;"></span> 투여된 치료제: <span id="count-drug">0</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 시뮬레이션 환경 변수
+        let cells = [];
+        let drugs = [];
+        let isLightOn = false;
+        
+        // 사용자 입력 값
+        let nidRate = 0.5;
+        let mutationRate = 0.1;
+
+        // UI 요소 연결
+        document.getElementById('slider-nid').oninput = function() { nidRate = this.value / 100; document.getElementById('val-nid').innerText = this.value; }
+        document.getElementById('slider-mut').oninput = function() { mutationRate = this.value / 100; document.getElementById('val-mut').innerText = this.value; }
+        
+        document.getElementById('btn-add-drug').onclick = () => {
+            for(let i=0; i<30; i++) drugs.push(new Drug());
+        };
+
+        const lightOverlay = document.getElementById('lightOverlay');
+        document.getElementById('btn-light').onclick = () => {
+            isLightOn = true;
+            lightOverlay.classList.add('light-on');
+            triggerApoptosis();
+            setTimeout(() => {
+                isLightOn = false;
+                lightOverlay.classList.remove('light-on');
+            }, 500); // 0.5초간 빛 조사
+        };
+
+        document.getElementById('btn-reset').onclick = initSim;
+
+        // 세포 클래스 정의
+        class Cell {
+            constructor(type, x, y) {
+                this.type = type; // 'normal', 'target', 'mutant'
+                this.x = x || Math.random() * (canvas.width - 40) + 20;
+                this.y = y || Math.random() * (canvas.height - 40) + 20;
+                this.radius = type === 'normal' ? 8 : 10;
+                this.vx = (Math.random() - 0.5) * 1;
+                this.vy = (Math.random() - 0.5) * 1;
+                this.internalizedDrugs = 0; // 내재화된 약물 개수
+                this.divisionTimer = type === 'normal' ? Infinity : Math.random() * 300 + 200; // 암세포 무한 증식 타이머
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                if (this.type === 'normal') ctx.fillStyle = '#28a745';
+                else if (this.type === 'target') ctx.fillStyle = '#dc3545';
+                else if (this.type === 'mutant') ctx.fillStyle = '#6f42c1';
+                ctx.fill();
+                ctx.closePath();
+
+                // 내재화된 약물이 있으면 세포 중심에 노란색 점 표시
+                if (this.internalizedDrugs > 0) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffc107';
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+
+            update() {
+                // 이동 로직
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 10 || this.x > canvas.width - 10) this.vx *= -1;
+                if (this.y < 10 || this.y > canvas.height - 10) this.vy *= -1;
+
+                // 체세포 분열 로직 (암세포만)
+                if (this.type !== 'normal') {
+                    this.divisionTimer--;
+                    if (this.divisionTimer <= 0 && cells.length < 300) {
+                        this.divide();
+                        this.divisionTimer = Math.random() * 300 + 200;
+                    }
+                }
+            }
+
+            divide() {
+                let newType = this.type;
+                // 표적 암세포 분열 시 돌연변이 발생 확률
+                if (this.type === 'target' && Math.random() < mutationRate) {
+                    newType = 'mutant';
+                }
+                cells.push(new Cell(newType, this.x + 15, this.y + 15));
+            }
+        }
+
+        // 약물 클래스 정의
+        class Drug {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = 10; // 위(혈관)에서 투여됨
+                this.radius = 3;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = Math.random() * 2 + 1;
+                this.active = true;
+            }
+
+            draw() {
+                if (!this.active) return;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffc107';
+                ctx.fill();
+                ctx.closePath();
+            }
+
+            update() {
+                if (!this.active) return;
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // 화면 밖으로 나가면 제거
+                if (this.x < 0 || this.x > canvas.width || this.y > canvas.height) {
+                    this.active = false;
+                }
+
+                // 세포와 충돌 검사 (항원-항체 반응)
+                for (let cell of cells) {
+                    if (cell.type === 'target') {
+                        let dx = this.x - cell.x;
+                        let dy = this.y - cell.y;
+                        let distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < cell.radius + this.radius) {
+                            // 내재화 효율(NID)에 따른 확률적 세포 내 진입
+                            if (Math.random() < nidRate) {
+                                cell.internalizedDrugs++;
+                                this.active = false;
+                                break;
+                            } else {
+                                // 튕겨나감 (결합 실패 또는 내재화 실패)
+                                this.vy *= -1;
+                                this.vx *= -1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 광반응 사멸 로직 (DNA 손상 반응 유도)
+        function triggerApoptosis() {
+            cells = cells.filter(cell => {
+                // 내재화된 약물이 있는 표적 암세포는 사멸 (배열에서 제거)
+                if (cell.type === 'target' && cell.internalizedDrugs > 0) {
+                    return false; 
+                }
+                return true;
+            });
+        }
+
+        // 시뮬레이션 초기화
+        function initSim() {
+            cells = [];
+            drugs = [];
+            // 초기 정상 세포 50개
+            for(let i=0; i<50; i++) cells.push(new Cell('normal'));
+            // 초기 표적 암세포 10개
+            for(let i=0; i<10; i++) cells.push(new Cell('target'));
+        }
+
+        // 통계 업데이트
+        function updateStats() {
+            let normal = 0, target = 0, mutant = 0;
+            cells.forEach(c => {
+                if (c.type === 'normal') normal++;
+                else if (c.type === 'target') target++;
+                else if (c.type === 'mutant') mutant++;
+            });
+            let activeDrugs = drugs.filter(d => d.active).length;
+
+            document.getElementById('count-normal').innerText = normal;
+            document.getElementById('count-target').innerText = target;
+            document.getElementById('count-mutant').innerText = mutant;
+            document.getElementById('count-drug').innerText = activeDrugs;
+        }
+
+        // 메인 렌더링 루프
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            cells.forEach(cell => {
+                cell.update();
+                cell.draw();
+            });
+
+            drugs.forEach(drug => {
+                drug.update();
+                drug.draw();
+            });
+
+            // 종료된 약물 배열 정리
+            drugs = drugs.filter(d => d.active);
+
+            updateStats();
+            requestAnimationFrame(animate);
+        }
+
+        // 실행
+        initSim();
+        animate();
+    </script>
+</body>
+</html>
