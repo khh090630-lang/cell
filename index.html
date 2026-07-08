@@ -2,24 +2,25 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>항체 표적 광반응 나노치료제 시뮬레이션</title>
+    <title>항체 표적 광반응 나노치료제 시뮬레이션 (TME 진화 모델)</title>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; gap: 20px; }
         #left-panel { display: flex; flex-direction: column; gap: 15px; }
         #canvas-container { position: relative; }
         canvas { background-color: #ffffff; border: 2px solid #333; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         
-        #explanation-box { width: 600px; background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 5px solid #1976d2; box-shadow: 0 4px 8px rgba(0,0,0,0.1); min-height: 80px; }
+        #explanation-box { width: 600px; background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 5px solid #1976d2; box-shadow: 0 4px 8px rgba(0,0,0,0.1); min-height: 90px; }
         #explanation-box h3 { margin: 0 0 10px 0; color: #0d47a1; font-size: 1.1rem; }
         #explanation-text { margin: 0; font-size: 0.95rem; line-height: 1.5; color: #333; }
 
-        #controls { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; width: 320px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; font-size: 1.2rem; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        #controls { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; width: 330px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); height: fit-content;}
+        h2 { margin-top: 0; font-size: 1.15rem; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
         .control-group { margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85rem; color: #555; }
         input[type="range"] { width: 100%; cursor: pointer; }
         
-        button { width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; transition: background 0.2s; color: white; }
+        button { width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; transition: transform 0.1s, background 0.2s; color: white; }
+        button:active { transform: scale(0.98); }
         #btn-add-drug { background-color: #007bff; }
         #btn-add-drug:hover { background-color: #0056b3; }
         #btn-light { background-color: #ff9800; }
@@ -28,7 +29,7 @@
         #btn-accel:hover { background-color: #5a32a3; }
         #btn-reset { background-color: #6c757d; }
         
-        .stats { margin-top: 20px; font-size: 0.9rem; line-height: 1.8; background: #fff3cd; padding: 15px; border-radius: 6px; border: 1px solid #ffeeba; }
+        .stats { margin-top: 15px; font-size: 0.85rem; line-height: 1.8; background: #fff3cd; padding: 15px; border-radius: 6px; border: 1px solid #ffeeba; }
         .color-box { display: inline-block; width: 12px; height: 12px; margin-right: 5px; border-radius: 50%; vertical-align: middle; }
         .overlay { position: absolute; top: 0; left: 0; width: 600px; height: 600px; pointer-events: none; border-radius: 8px; transition: background-color 0.3s; }
         .light-on { background-color: rgba(255, 69, 0, 0.2); }
@@ -45,7 +46,7 @@
         
         <div id="explanation-box">
             <h3 id="exp-title">🔬 시뮬레이션 준비 완료</h3>
-            <p id="explanation-text">우측 패널에서 변수를 설정하고 치료제를 투여해 보세요. <br><br><b>[환경 설명]</b> 상단의 회색 점선은 뇌를 보호하는 혈액-뇌 장벽(BBB)입니다. 초록색은 정상 신경 세포, 빨간색은 표적 항원을 가진 종양 세포를 나타냅니다.</p>
+            <p id="explanation-text">우측 패널에서 변수를 설정하고 치료제를 투여해 보세요. <br><br><b>[객체 설명]</b> 🟢 정상 신경 세포 | 🔴 표적 암세포 | 🟣 돌연변이 암세포 <br> 🔘 <b>대식세포(Macrophage):</b> 암세포 주변을 맴돌며 <b>치료제를 방어(흡수)</b>하는 미세환경 방해물</p>
         </div>
     </div>
 
@@ -53,35 +54,42 @@
         <h2>제어 패널 (독립 변인)</h2>
         
         <div class="control-group">
-            <label>1. 혈액-뇌 장벽(BBB) 투과율: <span id="val-bbb">30</span>% <span class="info-icon" title="집속초음파(FUS) 시술 등을 통한 장벽 개방 정도">ⓘ</span></label>
+            <label>1. 혈액-뇌 장벽(BBB) 투과율: <span id="val-bbb">30</span>% <span class="info-icon" title="집속초음파 시술을 통한 장벽 개방 정도">ⓘ</span></label>
             <input type="range" id="slider-bbb" min="0" max="100" value="30">
         </div>
 
         <div class="control-group">
-            <label>2. 세포 내재화 효율 (NID): <span id="val-nid">50</span>% <span class="info-icon" title="항체 결합 후 세포 내부로 흡수되는 비율">ⓘ</span></label>
+            <label>2. 종양 미세환경 (대식세포 밀도): <span id="val-mac">10</span> <span class="info-icon" title="치료제를 막아내는 대식세포의 수">ⓘ</span></label>
+            <input type="range" id="slider-mac" min="0" max="30" value="10">
+        </div>
+
+        <div class="control-group">
+            <label>3. 세포 내재화 효율 (NID): <span id="val-nid">50</span>% <span class="info-icon" title="약물이 암세포 내부로 흡수되는 비율">ⓘ</span></label>
             <input type="range" id="slider-nid" min="0" max="100" value="50">
         </div>
 
         <div class="control-group">
-            <label>3. 빛의 세기 (광량): <span id="val-light">80</span>% <span class="info-icon" title="활성 산소(ROS)를 생성하는 물리적 에너지">ⓘ</span></label>
+            <label>4. 빛의 세기 (광량): <span id="val-light">80</span>% <span class="info-icon" title="활성 산소(ROS)를 터뜨리는 레이저 강도">ⓘ</span></label>
             <input type="range" id="slider-light" min="0" max="100" value="80">
         </div>
 
         <div class="control-group">
-            <label>4. 돌연변이 발생률 (과변이): <span id="val-mut">1.0</span>% <span class="info-icon" title="종양의 악성화(Hypermutation)를 시각화하기 위해 조정된 스케일">ⓘ</span></label>
-            <input type="range" id="slider-mut" min="0" max="50" value="10"> </div>
+            <label>5. 돌연변이 발생률 (과변이): <span id="val-mut">1.0</span>% <span class="info-icon" title="진화를 가속화하는 무작위 돌연변이 확률">ⓘ</span></label>
+            <input type="range" id="slider-mut" min="0" max="50" value="10">
+        </div>
 
-        <button id="btn-add-drug">1단계: 치료제 투여 (Photo-ADC)</button>
+        <button id="btn-add-drug">1단계: 나노치료제 투여 (Photo-ADC)</button>
         <button id="btn-light">2단계: 근적외선(NIR) 조사</button>
-        <button id="btn-accel">시간 가속 (종양의 진화 관찰)</button>
+        <button id="btn-accel">시간 가속 (종양의 자연선택 관찰)</button>
         <button id="btn-reset">시뮬레이션 초기화</button>
 
         <div class="stats">
             <strong>📊 세포 개체군 현황</strong><br>
             <span class="color-box" style="background: #28a745;"></span> 정상 신경 세포: <span id="count-normal">0</span><br>
             <span class="color-box" style="background: #dc3545;"></span> 표적 발현 암세포: <span id="count-target">0</span><br>
-            <span class="color-box" style="background: #6f42c1;"></span> 표적 미발현 암세포: <span id="count-mutant">0</span><br>
-            <span class="color-box" style="background: #ffc107;"></span> 투여된 치료제: <span id="count-drug">0</span>
+            <span class="color-box" style="background: #6f42c1;"></span> 돌연변이 암세포: <span id="count-mutant">0</span><br>
+            <span class="color-box" style="background: #868e96;"></span> 대식세포 (장벽): <span id="count-mac">0</span><br>
+            <span class="color-box" style="background: #ffc107;"></span> 활성 치료제: <span id="count-drug">0</span>
         </div>
     </div>
 
@@ -91,75 +99,62 @@
         const expTitle = document.getElementById('exp-title');
         const expText = document.getElementById('explanation-text');
         
-        // 시뮬레이션 환경 변수
         let cells = [];
         let drugs = [];
-        let isLightOn = false;
+        let particles = []; // ROS 폭발 이펙트 파티클
         let timeSpeed = 1;
         
-        // 사용자 입력 값
+        // 사용자 변수
         let bbbRate = 0.3;
+        let macDensity = 10;
         let nidRate = 0.5;
         let lightIntensity = 0.8;
         let mutationRate = 0.01;
 
-        // UI 연결
+        // 슬라이더 이벤트 연결
         document.getElementById('slider-bbb').oninput = function() { bbbRate = this.value / 100; document.getElementById('val-bbb').innerText = this.value; }
+        document.getElementById('slider-mac').oninput = function() { macDensity = parseInt(this.value); document.getElementById('val-mac').innerText = this.value; }
         document.getElementById('slider-nid').oninput = function() { nidRate = this.value / 100; document.getElementById('val-nid').innerText = this.value; }
         document.getElementById('slider-light').oninput = function() { lightIntensity = this.value / 100; document.getElementById('val-light').innerText = this.value; }
-        document.getElementById('slider-mut').oninput = function() { 
-            mutationRate = (this.value / 10) / 100; 
-            document.getElementById('val-mut').innerText = (this.value / 10).toFixed(1); 
-        }
+        document.getElementById('slider-mut').oninput = function() { mutationRate = (this.value / 10) / 100; document.getElementById('val-mut').innerText = (this.value / 10).toFixed(1); }
         
-        // 버튼: 약물 투여
         document.getElementById('btn-add-drug').onclick = () => {
-            for(let i=0; i<40; i++) drugs.push(new Drug());
-            expTitle.innerText = "💉 [1단계] 약물 투여 및 항원-항체 반응";
-            expText.innerHTML = `투여된 나노치료제가 <b>혈액-뇌 장벽(BBB)</b>을 통과하려고 시도합니다. (현재 투과율: ${Math.round(bbbRate*100)}%)<br>장벽을 통과한 약물은 항원-항체 반응의 특이성에 의해 <b>표적 암세포(빨간색)</b>에만 결합합니다. 이때 설정된 <b>내재화 효율(${Math.round(nidRate*100)}%)</b>에 따라 세포 내부로 흡수(노란 점)되거나 튕겨 나갑니다.`;
+            for(let i=0; i<45; i++) drugs.push(new Drug());
+            expTitle.innerText = "💉 [1단계] 약물 투여 및 종양 미세환경 진입";
+            expText.innerHTML = `투여된 치료제가 <b>혈액-뇌 장벽(BBB)</b>을 통과합니다.<br>장벽을 통과하더라도 <b>대식세포(회색)</b>가 약물을 중간에 흡수해버립니다! 종양 미세환경(TME)이 약물을 방어하는 과정을 관찰하세요. 약물이 암세포 표면에 무사히 닿으면 <b>내재화 효율(${Math.round(nidRate*100)}%)</b>에 따라 내부로 흡수됩니다.`;
         };
 
-        // 버튼: 빛 조사
         const lightOverlay = document.getElementById('lightOverlay');
         document.getElementById('btn-light').onclick = () => {
-            isLightOn = true;
             lightOverlay.classList.add('light-on');
             triggerApoptosis();
             
-            expTitle.innerText = "🔦 [2단계] 광반응 및 세포 자살(Apoptosis)";
-            expText.innerHTML = `근적외선(NIR)이 조사되었습니다! 세포 내부로 흡수된 나노 소자가 빛을 받아 <b>활성 산소(ROS)</b>를 방출합니다.<br>빛의 세기(현재 ${Math.round(lightIntensity*100)}%)가 충분하여 ROS가 임계치를 넘으면, 암세포의 DNA 손상 반응(DDR)이 유도되어 세포 주기가 정지하고 <b>사멸(Apoptosis)</b>하게 됩니다.`;
+            expTitle.innerText = "🔦 [2단계] 활성 산소(ROS) 폭발 및 세포 자살";
+            expText.innerHTML = `빛(NIR)이 조사되었습니다! 약물을 품은 암세포 내부에서 파란색 <b>활성 산소(ROS)</b>가 폭발합니다.<br>빛의 세기(${Math.round(lightIntensity*100)}%)에 비례해 암세포의 DNA가 치명적인 손상을 입어 <b>세포 주기가 정지되고 사멸</b>합니다.`;
 
-            setTimeout(() => {
-                isLightOn = false;
-                lightOverlay.classList.remove('light-on');
-            }, 800);
+            setTimeout(() => { lightOverlay.classList.remove('light-on'); }, 600);
         };
 
-        // 버튼: 시간 가속 (진화 관찰)
         document.getElementById('btn-accel').onclick = () => {
             timeSpeed = 5;
-            expTitle.innerText = "🧬 시간 가속: 종양의 자연선택과 진화";
-            expText.innerHTML = `<b>(과변이율: ${(mutationRate*100).toFixed(1)}% 적용 중)</b> 암세포들이 빠르게 분열합니다. 표적 암세포(빨간색)는 치료제에 의해 지속적으로 제거되지만, 돌연변이로 표적을 잃어버린 <b>표적 미발현 암세포(보라색)</b>는 약물에 반응하지 않고 살아남습니다. 결국 이들이 <b>자연선택</b>되어 공간을 지배하며 종양이 진화(재발)하는 모습을 관찰할 수 있습니다.`;
-            
-            setTimeout(() => { timeSpeed = 1; }, 5000); // 5초 후 정상 속도 복귀
+            expTitle.innerText = "🧬 시간 가속: 환경 압력과 자연선택";
+            expText.innerHTML = `세포 분열 속도가 5배 증가합니다. 약물에 죽는 표적 암세포(빨간색)와 달리, 무작위 돌연변이로 표적을 상실한 <b>표적 미발현 암세포(보라색)</b>는 약물을 무시하고 생존합니다.<br>경쟁자가 사라진 환경에서 보라색 암세포들이 공간을 지배하며 <b>자연선택적으로 진화(재발)</b>합니다.`;
+            setTimeout(() => { timeSpeed = 1; }, 5000);
         };
 
-        document.getElementById('btn-reset').onclick = () => {
-            initSim();
-            expTitle.innerText = "🔄 시뮬레이션 초기화";
-            expText.innerHTML = "모든 변수와 세포 상태가 초기화되었습니다. 다른 조건(실패 조건 등)으로 설정하여 시뮬레이션을 다시 구동해 보세요.";
-        };
+        document.getElementById('btn-reset').onclick = initSim;
 
+        // 세포 및 대식세포 클래스
         class Cell {
             constructor(type, x, y) {
-                this.type = type; // 'normal', 'target', 'mutant'
+                this.type = type; // 'normal', 'target', 'mutant', 'macrophage'
                 this.x = x || Math.random() * (canvas.width - 40) + 20;
-                this.y = y || (Math.random() * (canvas.height - 100) + 80); // BBB 아래 배치
-                this.radius = type === 'normal' ? 8 : 10;
-                this.vx = (Math.random() - 0.5) * 1;
-                this.vy = (Math.random() - 0.5) * 1;
+                this.y = y || (Math.random() * (canvas.height - 100) + 80);
+                this.radius = type === 'macrophage' ? 12 : (type === 'normal' ? 8 : 10);
+                this.vx = (Math.random() - 0.5) * (type === 'macrophage' ? 1.5 : 1);
+                this.vy = (Math.random() - 0.5) * (type === 'macrophage' ? 1.5 : 1);
                 this.internalizedDrugs = 0;
-                this.divisionBase = type === 'normal' ? Infinity : 250;
+                this.divisionBase = type === 'normal' ? Infinity : (type === 'macrophage' ? Infinity : 250);
                 this.divisionTimer = Math.random() * this.divisionBase + 100;
             }
 
@@ -169,6 +164,12 @@
                 if (this.type === 'normal') ctx.fillStyle = '#28a745';
                 else if (this.type === 'target') ctx.fillStyle = '#dc3545';
                 else if (this.type === 'mutant') ctx.fillStyle = '#6f42c1';
+                else if (this.type === 'macrophage') {
+                    ctx.fillStyle = '#868e96'; // 대식세포는 회색
+                    ctx.strokeStyle = '#343a40';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
                 ctx.fill();
                 ctx.closePath();
 
@@ -176,8 +177,6 @@
                     ctx.beginPath();
                     ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
                     ctx.fillStyle = '#ffc107';
-                    ctx.strokeStyle = '#333';
-                    ctx.stroke();
                     ctx.fill();
                     ctx.closePath();
                 }
@@ -186,10 +185,10 @@
             update() {
                 this.x += this.vx * timeSpeed;
                 this.y += this.vy * timeSpeed;
-                if (this.x < 10 || this.x > canvas.width - 10) this.vx *= -1;
-                if (this.y < 60 || this.y > canvas.height - 10) this.vy *= -1; // 60은 BBB 라인
+                if (this.x < 15 || this.x > canvas.width - 15) this.vx *= -1;
+                if (this.y < 65 || this.y > canvas.height - 15) this.vy *= -1;
 
-                if (this.type !== 'normal') {
+                if (this.type === 'target' || this.type === 'mutant') {
                     this.divisionTimer -= timeSpeed;
                     if (this.divisionTimer <= 0 && cells.length < 350) {
                         this.divide();
@@ -200,14 +199,12 @@
 
             divide() {
                 let newType = this.type;
-                // 표적 암세포 분열 시 설정된 확률로 돌연변이 발생
-                if (this.type === 'target' && Math.random() < mutationRate) {
-                    newType = 'mutant';
-                }
+                if (this.type === 'target' && Math.random() < mutationRate) newType = 'mutant';
                 cells.push(new Cell(newType, this.x + 15, this.y + 15));
             }
         }
 
+        // 약물 클래스
         class Drug {
             constructor() {
                 this.x = Math.random() * canvas.width;
@@ -233,34 +230,32 @@
                 this.x += this.vx * timeSpeed;
                 this.y += this.vy * timeSpeed;
                 
-                // BBB 통과 검사 (y=50)
                 if (this.y > 45 && this.y < 55 && !this.passedBBB) {
-                    if (Math.random() > bbbRate) {
-                        this.active = false; // 장벽 통과 실패
-                        return;
-                    }
+                    if (Math.random() > bbbRate) { this.active = false; return; }
                     this.passedBBB = true;
                 }
 
-                if (this.x < 0 || this.x > canvas.width || this.y > canvas.height) {
-                    this.active = false;
-                }
+                if (this.x < 0 || this.x > canvas.width || this.y > canvas.height) this.active = false;
 
-                // 항원-항체 반응 및 내재화
                 for (let cell of cells) {
-                    if (cell.type === 'target') {
-                        let dx = this.x - cell.x;
-                        let dy = this.y - cell.y;
-                        let distance = Math.sqrt(dx * dx + dy * dy);
+                    let dx = this.x - cell.x;
+                    let dy = this.y - cell.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
 
-                        if (distance < cell.radius + this.radius) {
+                    if (distance < cell.radius + this.radius) {
+                        // 대식세포에 닿으면 흡수됨 (약물 소실)
+                        if (cell.type === 'macrophage') {
+                            this.active = false;
+                            break;
+                        }
+                        // 표적 암세포에 닿으면 내재화 검사
+                        if (cell.type === 'target') {
                             if (Math.random() < nidRate) {
                                 cell.internalizedDrugs++;
                                 this.active = false;
                                 break;
                             } else {
-                                this.vy *= -1;
-                                this.vx *= -1;
+                                this.vy *= -1; this.vx *= -1;
                             }
                         }
                     }
@@ -268,63 +263,106 @@
             }
         }
 
-        // 광반응 사멸
+        // 활성 산소(ROS) 폭발 이펙트 파티클
+        class Particle {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.radius = 2;
+                this.maxRadius = Math.random() * 20 + 20;
+                this.alpha = 1;
+                this.active = true;
+            }
+            draw() {
+                if (!this.active) return;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 191, 255, ${this.alpha})`; // ROS 파란색
+                ctx.fill();
+                ctx.closePath();
+            }
+            update() {
+                this.radius += 2;
+                this.alpha -= 0.05;
+                if (this.alpha <= 0) this.active = false;
+            }
+        }
+
         function triggerApoptosis() {
             cells = cells.filter(cell => {
-                // 내재화된 약물이 있는 표적 암세포에 한해, 빛의 세기 확률로 사멸
                 if (cell.type === 'target' && cell.internalizedDrugs > 0) {
-                    if (Math.random() < lightIntensity) return false; 
+                    if (Math.random() < lightIntensity) {
+                        // 사멸할 때 ROS 폭발 이펙트 생성
+                        for(let i=0; i<3; i++) particles.push(new Particle(cell.x, cell.y));
+                        return false; 
+                    }
                 }
                 return true;
             });
         }
 
-        // 캔버스에 BBB 그리기
         function drawEnvironment() {
             ctx.beginPath();
             ctx.setLineDash([5, 5]);
-            ctx.moveTo(0, 50);
-            ctx.lineTo(canvas.width, 50);
-            ctx.strokeStyle = '#999';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            ctx.moveTo(0, 50); ctx.lineTo(canvas.width, 50);
+            ctx.strokeStyle = '#999'; ctx.lineWidth = 2; ctx.stroke();
             ctx.setLineDash([]);
-            ctx.fillStyle = '#999';
-            ctx.font = '12px Malgun Gothic';
+            ctx.fillStyle = '#999'; ctx.font = '12px Malgun Gothic';
             ctx.fillText('Blood-Brain Barrier (혈액-뇌 장벽)', 10, 40);
         }
 
         function initSim() {
             cells = [];
             drugs = [];
+            particles = [];
             timeSpeed = 1;
             for(let i=0; i<40; i++) cells.push(new Cell('normal'));
             for(let i=0; i<15; i++) cells.push(new Cell('target'));
+            
+            // 대식세포 슬라이더 값만큼 추가
+            macDensity = parseInt(document.getElementById('slider-mac').value);
+            for(let i=0; i<macDensity; i++) cells.push(new Cell('macrophage'));
         }
 
         function updateStats() {
-            let normal = 0, target = 0, mutant = 0;
+            let normal = 0, target = 0, mutant = 0, mac = 0;
             cells.forEach(c => {
                 if (c.type === 'normal') normal++;
                 else if (c.type === 'target') target++;
                 else if (c.type === 'mutant') mutant++;
+                else if (c.type === 'macrophage') mac++;
             });
-            let activeDrugs = drugs.filter(d => d.active).length;
-
             document.getElementById('count-normal').innerText = normal;
             document.getElementById('count-target').innerText = target;
             document.getElementById('count-mutant').innerText = mutant;
-            document.getElementById('count-drug').innerText = activeDrugs;
+            document.getElementById('count-mac').innerText = mac;
+            document.getElementById('count-drug').innerText = drugs.filter(d => d.active).length;
         }
 
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawEnvironment();
 
+            // 객체 업데이트 및 그리기
             cells.forEach(cell => { cell.update(); cell.draw(); });
             drugs.forEach(drug => { drug.update(); drug.draw(); });
+            particles.forEach(p => { p.update(); p.draw(); });
 
+            // 쓰레기 수집
             drugs = drugs.filter(d => d.active);
+            particles = particles.filter(p => p.active);
+
+            // 대식세포 개수 동기화 (사용자가 중간에 슬라이더를 바꿀 경우를 위해)
+            let currentMacs = cells.filter(c => c.type === 'macrophage').length;
+            if (currentMacs < macDensity) cells.push(new Cell('macrophage'));
+            else if (currentMacs > macDensity) {
+                let removed = false;
+                cells = cells.filter(c => {
+                    if (c.type === 'macrophage' && !removed && currentMacs > macDensity) {
+                        removed = true; currentMacs--; return false;
+                    }
+                    return true;
+                });
+            }
 
             updateStats();
             requestAnimationFrame(animate);
